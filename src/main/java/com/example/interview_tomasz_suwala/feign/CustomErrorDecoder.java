@@ -13,23 +13,23 @@ import static feign.FeignException.errorStatus;
 @Service
 public class CustomErrorDecoder implements ErrorDecoder {
 
-
     @Override
     public Exception decode(String methodKey, Response response) {
-        if (response.status() == 404) {
-            return new GitClientNotFoundException();
-        } else if (response.status() == 400) {
-            return new GitClientBadRequestException();
-        } else if (response.status() >= 400 && response.status() <= 499) {
-            return new GitClientException(response.status(), response.reason());
-        }
 
-        if (response.status() >= 500 && response.status() <= 599) {
-            return new GitServerException(
-                    response.status(),
-                    response.reason()
-            );
+        switch (response.status()) {
+            case 404:
+                return new GitClientNotFoundException();
+            case 400:
+                return new GitClientBadRequestException();
+            case 401:
+            case 499:
+                return new GitClientException(response.status(), response.reason());
+            case 500:
+            case 599:
+                return new GitServerException(response.status(), response.reason());
+            default:
+                return errorStatus(methodKey, response);
+
         }
-        return errorStatus(methodKey, response);
     }
 }
